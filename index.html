@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>自治体人口マップ - e-stat2015年国勢調査＆地表公共団体オープンデータ</title>
+</head><body>
+<h1>自治体人口マップ<small> - e-stat2015年国勢調査＆地表公共団体オープンデータ</small></h1>
+<script type="module">
+import { LeafletGSI } from "https://js.sabae.cc/LeafletGSI.js";
+import { CSV } from "https://js.sabae.cc/CSV.js";
+
+const divmap = document.createElement("div");
+divmap.style.height = "70vh";
+document.body.appendChild(divmap);
+const map = await LeafletGSI.initMap(divmap);
+map.setView([37, 135], 5); // 日本表示
+
+const pop = await CSV.fetchJSON("https://code4fukui.github.io/e-stat/population.csv");
+console.log(pop);
+const lg = await CSV.fetchJSON("https://code4fukui.github.io/localgovjp/localgovjp-utf8.csv");
+console.log(lg);
+lg.forEach(l => {
+  const p = pop.find(d => d.lgcode == l.lgcode);
+  if (!p) {
+    //throw new Error("not found " + l.city);
+    console.log("not fonud", l.city); // 富谷市 2016年 那珂川市 2018年
+  }
+  l.population2015 = p ? parseInt(p[2015]) : "-";
+  l.difpopulation2015 = p? parseInt(p[2015]) - parseInt(p[2010]) : "-";
+});
+
+const omit = (s, len) => {
+  if (s.length > len) {
+    return s.substring(0, len) + "...";
+  }
+  return s;
+};
+const makeTable = (d) => {
+  const tbl = [];
+  tbl.push("<table>");
+  for (const name in d) {
+    let val = d[name];
+    if (val && typeof val == "string" && (val.startsWith("http://") || val.startsWith("https://"))) {
+      val = "<a href=" + val + ">" + omit(val, 30) + "</a>";
+    }
+    if (val) {
+      if (name == "sabaecc:geo3x3") {
+        tbl.push(`<tr><th>${name}</th><td><a href=https://code4sabae.github.io/geo3x3-map/#${val}>${val}</a></td></tr>`);
+      } else {
+        tbl.push(`<tr><th>${name}</th><td>${val}</td></tr>`);
+      }
+    }
+  }
+  tbl.push("</table>");
+  return tbl.join("");
+};
+
+for (const l of lg) {
+  const n = l.population2015;
+  const color = n > 1000000 ? "red" : n > 200000 ? "orange" : n > 100000 ? "green" : "blue";
+  const c = L.circle([l.lat, l.lng], { radius: isNaN(n) ? 1 : Math.sqrt(n) * 10, color });
+  c.addTo(map);
+  c.bindPopup(makeTable(l));
+}
+
+const src = document.createElement("a");
+src.display = "block";
+src.textContent = "src on GitHub";
+src.href = "https://github.com/code4fukui/population-map/";
+document.body.appendChild(src);
+
+</script>
+</body></html>

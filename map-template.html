@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>日本地図表示</title>
+</head><body>
+<h1>日本地図表示</h1>
+<script type="module">
+import { LeafletGSI } from "https://js.sabae.cc/LeafletGSI.js";
+
+const divmap = document.createElement("div");
+divmap.style.height = "70vh";
+document.body.appendChild(divmap);
+const map = await LeafletGSI.initMap(divmap);
+map.setView([37, 135], 5); // 日本表示
+</script>
+</body></html>
